@@ -11,10 +11,17 @@ import {
 } from '@/components/ui/sidebar';
 import { BrainCircuitIcon } from '@/components/icons';
 import { SettingsDialog } from './settings-dialog';
-import { Cog, History, LayoutGrid, Pencil } from 'lucide-react';
+import { Cog, History, LayoutGrid, Pencil, Palette, Sun, Moon, Sparkles, Paintbrush } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { HistoryPanel } from './history-panel';
 import type { Interaction } from '@/lib/types';
+import { useTheme } from '@/components/theme-provider';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+  } from "@/components/ui/dropdown-menu"
 
 
 type SidebarContentProps = {
@@ -33,6 +40,7 @@ export function SidebarContent({
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
   const [activeButton, setActiveButton] = React.useState('explore');
   const [isHistoryPanelOpen, setIsHistoryPanelOpen] = React.useState(false);
+  const { setTheme } = useTheme();
 
 
   const handleMenuClick = (buttonName: string) => {
@@ -88,6 +96,33 @@ export function SidebarContent({
       </SidebarContentArea>
       <SidebarFooter className="p-0">
         <SidebarMenu>
+            <SidebarMenuItem>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <SidebarMenuButton tooltip="Change Theme" size="lg">
+                            <Palette />
+                        </SidebarMenuButton>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="right" align="center" className="mb-2">
+                        <DropdownMenuItem onClick={() => setTheme("light")}>
+                            <Sun className="mr-2 h-4 w-4" />
+                            <span>Light</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTheme("dark")}>
+                            <Moon className="mr-2 h-4 w-4" />
+                            <span>Dark</span>
+                        </DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => setTheme("vibrant")}>
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            <span>Vibrant</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTheme("colorful")}>
+                            <Paintbrush className="mr-2 h-4 w-4" />
+                            <span>Colorful</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </SidebarMenuItem>
             <SidebarMenuItem>
                 <SidebarMenuButton tooltip="Settings" size="lg" onClick={() => setIsSettingsOpen(true)}>
                     <Cog />
