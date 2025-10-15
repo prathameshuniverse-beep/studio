@@ -218,12 +218,8 @@ export default function Home() {
             });
         }
     } catch (error) {
+      console.error("Failed to get response from model(s):", error);
       dispatch({ type: 'GENERATE_RESPONSE_ERROR' });
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to get a response from the model(s).',
-      });
     }
   };
   

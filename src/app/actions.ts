@@ -60,17 +60,17 @@ export async function processPrompt(prompt: string, modelName: string, apiKeys: 
   const modelInfo = MODELS.find(m => m.name === modelName);
   let response = '';
 
-  if (modelInfo && apiKeys[modelInfo.id]) {
-      try {
+  try {
+    if (modelInfo && apiKeys[modelInfo.id]) {
         const model = ai.model(modelInfo.id as any);
         const result = await ai.generate({ model, prompt, config: { apiKey: apiKeys[modelInfo.id] }});
         response = result.text;
-      } catch (error) {
-        console.error(`Error with ${modelName}:`, error);
-        response = `Error fetching response from ${modelName}. Falling back to dummy response.\n\n` + await getDummyResponse(prompt, modelName);
-      }
-  } else {
-    response = await getDummyResponse(prompt, modelName);
+    } else {
+      response = await getDummyResponse(prompt, modelName);
+    }
+  } catch (error) {
+    console.error(`Error with ${modelName}:`, error);
+    response = `Error fetching response from ${modelName}. Falling back to dummy response.\n\n` + await getDummyResponse(prompt, modelName);
   }
   
   try {
@@ -95,9 +95,11 @@ export async function processPromptAll(prompt: string, apiKeys: Record<string, s
           const result = await processPrompt(prompt, model.name, apiKeys);
           return { model, ...result };
         } catch (error) {
+          console.error(`Error processing prompt for ${model.name}:`, error);
+          const dummyResponse = await getDummyResponse(prompt, model.name);
           return {
             model,
-            response: `Error fetching response from ${model.name}.`,
+            response: `Error fetching response from ${model.name}.\n\n${dummyResponse}`,
             summary: "Error generating summary."
           };
         }
