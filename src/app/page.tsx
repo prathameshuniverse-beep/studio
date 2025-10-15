@@ -5,17 +5,16 @@ import {
   SidebarProvider,
   Sidebar,
   SidebarInset,
-  SidebarTrigger,
-  SidebarHeader,
 } from '@/components/ui/sidebar';
 import { useToast } from '@/hooks/use-toast';
 import { getSuggestions, processPrompt } from '@/app/actions';
-import type { Model } from '@/lib/types';
+import type { Model, Interaction } from '@/lib/types';
 import { MODELS } from '@/lib/constants';
 import { SidebarContent } from '@/components/modelverse/sidebar-content';
 import { WelcomeScreen } from '@/components/modelverse/welcome-screen';
 import { ResponseDisplay } from '@/components/modelverse/response-display';
 import { PromptForm } from '@/components/modelverse/prompt-form';
+import { HistoryPanel } from '@/components/modelverse/history-panel';
 
 type AppState = {
   selectedModel: Model | null;
@@ -27,6 +26,8 @@ type AppState = {
   prompt: string;
   response: string;
   summary: string;
+  history: Interaction[];
+  activeInteractionId: string | null;
 };
 
 type AppAction =
@@ -40,9 +41,11 @@ type AppAction =
   | { type: 'GENERATE_RESPONSE_START'; payload: string }
   | {
       type: 'GENERATE_RESPONSE_SUCCESS';
-      payload: { response: string; summary: string };
+      payload: { response: string; summary: string; prompt: string; model: Model };
     }
-  | { type: 'GENERATE_RESPONSE_ERROR' };
+  | { type: 'GENERATE_RESPONSE_ERROR' }
+  | { type: 'NEW_CHAT' }
+  | { type: 'LOAD_INTERACTION'; payload: string };
 
 const initialState: AppState = {
   selectedModel: MODELS[0],
@@ -54,12 +57,14 @@ const initialState: AppState = {
   prompt: '',
   response: '',
   summary: '',
+  history: [],
+  activeInteractionId: null,
 };
 
 function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'SET_MODEL':
-      return { ...state, selectedModel: action.payload, response: '', summary: '' };
+      return { ...state, selectedModel: action.payload };
     case 'SET_TEMPERATURE':
       return { ...state, temperature: action.payload };
     case 'SET_MAX_TOKENS':
@@ -73,16 +78,56 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'FETCH_SUGGESTIONS_ERROR':
       return { ...state, isLoadingSuggestions: false };
     case 'GENERATE_RESPONSE_START':
-      return { ...state, isGeneratingResponse: true, prompt: action.payload };
-    case 'GENERATE_RESPONSE_SUCCESS':
+      return { 
+        ...state, 
+        isGeneratingResponse: true, 
+        prompt: action.payload,
+        response: '', // Clear previous response
+        summary: ''
+      };
+    case 'GENERATE_RESPONSE_SUCCESS': {
+      const newInteraction: Interaction = {
+        id: new Date().toISOString(),
+        model: action.payload.model,
+        prompt: action.payload.prompt,
+        response: action.payload.response,
+        summary: action.payload.summary,
+      };
       return {
         ...state,
         isGeneratingResponse: false,
         response: action.payload.response,
         summary: action.payload.summary,
+        prompt: action.payload.prompt,
+        history: [newInteraction, ...state.history],
+        activeInteractionId: newInteraction.id,
       };
+    }
     case 'GENERATE_RESPONSE_ERROR':
       return { ...state, isGeneratingResponse: false };
+    case 'NEW_CHAT':
+        return {
+          ...state,
+          prompt: '',
+          response: '',
+          summary: '',
+          activeInteractionId: null,
+          selectedModel: MODELS[0],
+        };
+    case 'LOAD_INTERACTION': {
+      const interaction = state.history.find(h => h.id === action.payload);
+      if (interaction) {
+        return {
+          ...state,
+          prompt: interaction.prompt,
+          response: interaction.response,
+          summary: interaction.summary,
+          selectedModel: interaction.model,
+          activeInteractionId: interaction.id,
+        };
+      }
+      return state;
+    }
     default:
       return state;
   }
@@ -129,7 +174,10 @@ export default function Home() {
     dispatch({ type: 'GENERATE_RESPONSE_START', payload: data.prompt });
     try {
       const result = await processPrompt(data.prompt, state.selectedModel.name);
-      dispatch({ type: 'GENERATE_RESPONSE_SUCCESS', payload: result });
+      dispatch({ 
+        type: 'GENERATE_RESPONSE_SUCCESS', 
+        payload: { ...result, prompt: data.prompt, model: state.selectedModel } 
+      });
     } catch (error) {
       dispatch({ type: 'GENERATE_RESPONSE_ERROR' });
       toast({
@@ -142,64 +190,72 @@ export default function Home() {
   
   const onSuggestionClick = (prompt: string) => {
     dispatch({ type: 'SET_PROMPT', payload: prompt });
-  }
+    // Automatically submit the suggestion
+    handlePromptSubmit({ prompt });
+  };
+
+  const handleNewChat = () => {
+    dispatch({ type: 'NEW_CHAT' });
+  };
+
+  const handleHistorySelect = (interactionId: string) => {
+    dispatch({ type: 'LOAD_INTERACTION', payload: interactionId });
+  };
+
+  const activeInteraction = state.history.find(i => i.id === state.activeInteractionId);
 
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarContent
-          selectedModel={state.selectedModel}
-          onModelSelect={handleModelSelect}
-          temperature={state.temperature}
-          onTemperatureChange={(value) =>
-            dispatch({ type: 'SET_TEMPERATURE', payload: value[0] })
-          }
-          maxTokens={state.maxTokens}
-          onMaxTokensChange={(value) =>
-            dispatch({ type: 'SET_MAX_TOKENS', payload: value[0] })
-          }
+    <SidebarProvider defaultOpen={false}>
+       <div className="flex min-h-screen bg-background">
+        <Sidebar>
+          <SidebarContent 
+            onNewChat={handleNewChat}
+            onSettingsClick={() => {}} // Placeholder
+          />
+        </Sidebar>
+        <HistoryPanel
+            interactions={state.history}
+            onSelectInteraction={handleHistorySelect}
+            activeInteractionId={state.activeInteractionId}
         />
-      </Sidebar>
-      <SidebarInset className="flex flex-col">
-        <SidebarHeader className="border-b">
-          <div className="flex items-center justify-between">
-            <SidebarTrigger />
-            <h1 className="text-lg font-semibold">
-              {state.selectedModel?.name || 'ModelVerse'}
-            </h1>
-            <div className="w-7"></div>
-          </div>
-        </SidebarHeader>
-
-        <main className="flex-1 overflow-auto p-4 md:p-6">
-          <div className="mx-auto max-w-4xl h-full">
-            {state.response ? (
-              <ResponseDisplay
-                response={state.response}
-                summary={state.summary}
-                isLoading={state.isGeneratingResponse}
-              />
-            ) : (
-              <WelcomeScreen
-                suggestions={state.suggestions}
-                isLoading={state.isLoadingSuggestions}
-                onSuggestionClick={onSuggestionClick}
-              />
-            )}
-          </div>
-        </main>
-
-        <footer className="p-4 md:p-6 border-t bg-background/95 backdrop-blur-sm">
-          <div className="mx-auto max-w-4xl">
-            <PromptForm
-              onSubmit={handlePromptSubmit}
-              isLoading={state.isGeneratingResponse}
-              key={state.prompt} // Re-mount form when suggestion is clicked
-              prompt={state.prompt}
-            />
-          </div>
-        </footer>
-      </SidebarInset>
+        <SidebarInset>
+          <main className="flex-1 flex flex-col overflow-auto p-4 md:p-6">
+            <div className="mx-auto max-w-4xl w-full h-full">
+              {state.response || state.isGeneratingResponse ? (
+                <ResponseDisplay
+                  prompt={state.prompt}
+                  response={state.response}
+                  summary={state.summary}
+                  isLoading={state.isGeneratingResponse}
+                  model={activeInteraction?.model || state.selectedModel}
+                />
+              ) : (
+                <WelcomeScreen
+                  suggestions={state.suggestions}
+                  isLoading={state.isLoadingSuggestions}
+                  onSuggestionClick={onSuggestionClick}
+                  onModelSelect={handleModelSelect}
+                  selectedModel={state.selectedModel}
+                />
+              )}
+            </div>
+            
+            <div className="sticky bottom-0 w-full bg-background/95 backdrop-blur-sm mt-auto pt-4">
+              <div className="mx-auto max-w-4xl">
+                <PromptForm
+                  onSubmit={handlePromptSubmit}
+                  isLoading={state.isGeneratingResponse}
+                  key={state.activeInteractionId || 'new-chat'} 
+                  prompt={state.prompt}
+                />
+                 <p className="text-xs text-center text-muted-foreground p-2">
+                    ModelVerse can make mistakes. Consider checking important information.
+                </p>
+              </div>
+            </div>
+          </main>
+        </SidebarInset>
+      </div>
     </SidebarProvider>
   );
 }

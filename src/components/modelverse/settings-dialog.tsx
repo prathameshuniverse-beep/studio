@@ -41,13 +41,13 @@ interface SettingsDialogProps {
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { toast } = useToast();
 
-  const getSavedKeys = () => {
+  const getSavedKeys = React.useCallback(() => {
     if (typeof window === 'undefined') {
       return {};
     }
     const savedKeys = localStorage.getItem('model-api-keys');
     return savedKeys ? JSON.parse(savedKeys) : {};
-  };
+  }, []);
 
   const form = useForm<ApiKeysFormValues>({
     resolver: zodResolver(apiKeysSchema),
@@ -58,7 +58,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     if (open) {
       form.reset(getSavedKeys());
     }
-  }, [open, form]);
+  }, [open, form, getSavedKeys]);
 
   const onSubmit = (data: ApiKeysFormValues) => {
     localStorage.setItem('model-api-keys', JSON.stringify(data));
@@ -97,7 +97,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           {model.name} API Key
                         </FormLabel>
                         <FormControl>
-                          <Input type="password" {...field} />
+                          <Input type="password" {...field} value={field.value || ''}/>
                         </FormControl>
                         <FormMessage />
                       </FormItem>

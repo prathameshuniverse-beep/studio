@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { SendHorizonal, LoaderCircle } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 const promptSchema = z.object({
   prompt: z.string().min(1, { message: 'Prompt cannot be empty.' }),
@@ -28,10 +28,30 @@ export function PromptForm({ onSubmit, isLoading, prompt }: PromptFormProps) {
       prompt: prompt || '',
     },
   });
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   useEffect(() => {
     form.reset({ prompt });
+    if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
   }, [prompt, form]);
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        form.handleSubmit(onSubmit)();
+    }
+  }
+
+  const handleInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    if(textareaRef.current){
+        textareaRef.current.style.height = 'auto';
+        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }
 
   return (
     <Form {...form}>
@@ -43,8 +63,11 @@ export function PromptForm({ onSubmit, isLoading, prompt }: PromptFormProps) {
             <FormItem>
               <FormControl>
                 <Textarea
+                  ref={textareaRef}
                   placeholder="Enter your prompt here..."
-                  className="min-h-24 pr-28 resize-none"
+                  className="min-h-12 pr-14 resize-none rounded-2xl border-2 border-border focus:border-ring overflow-y-hidden"
+                  onKeyDown={handleKeyDown}
+                  onInput={handleInput}
                   {...field}
                 />
               </FormControl>
@@ -53,9 +76,9 @@ export function PromptForm({ onSubmit, isLoading, prompt }: PromptFormProps) {
         />
         <Button
           type="submit"
-          disabled={isLoading}
-          className="absolute right-3 bottom-3"
-          size="lg"
+          disabled={isLoading || !form.watch('prompt')}
+          className="absolute right-3 bottom-3 rounded-xl"
+          size="icon"
         >
           {isLoading ? (
             <LoaderCircle className="animate-spin" />
