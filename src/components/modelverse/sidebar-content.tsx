@@ -62,12 +62,12 @@ export function SidebarContent({
 
   return (
     <>
-      <SidebarHeader className="p-0">
-        <div className="flex items-center justify-center h-16 border-b border-sidebar-border">
-          <BrainCircuitIcon className="w-8 h-8 text-primary" />
+      <SidebarHeader>
+        <div className="flex items-center justify-center h-16 w-16 mx-auto">
+          <BrainCircuitIcon className="w-9 h-9 text-primary" />
         </div>
       </SidebarHeader>
-      <SidebarContentArea className="flex-1 p-0">
+      <SidebarContentArea>
         <SidebarMenu>
             <SidebarMenuItem>
                 <SidebarMenuButton tooltip="Explore" size="lg" isActive={activeButton === 'explore'} onClick={() => handleMenuClick('explore')}>
@@ -99,7 +99,7 @@ export function SidebarContent({
             )}
         </SidebarMenu>
       </SidebarContentArea>
-      <SidebarFooter className="p-0">
+      <SidebarFooter>
         <SidebarMenu>
             <SidebarMenuItem>
                 <DropdownMenu>
