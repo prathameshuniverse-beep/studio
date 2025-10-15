@@ -5,7 +5,6 @@ import { summarizeModelResponse } from '@/ai/flows/summarize-model-response';
 import { MODELS } from '@/lib/constants';
 import type { IndividualResponse } from '@/lib/types';
 import { ai } from '@/ai/genkit';
-import { streamText } from 'genkit/ai';
 
 async function getDummyResponse(prompt: string, modelName: string) {
   await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1000)); 
@@ -18,17 +17,17 @@ ModelVerse is designed to be a clean and intuitive interface. Here are some of i
 - **Configuration**: Adjust parameters like temperature.
 
 Here is a sample code block in JavaScript:
-\`\`\`javascript
+\'\'\'javascript
 function greet(name) {
   // This function greets the user with the provided name.
   console.log(\`Hello, \${name}! Welcome to ModelVerse.\`);
 }
 
 greet('${modelName}');
-\`\`\`
+\'\'\'
 
 And a Python example:
-\`\`\`python
+\'\'\'python
 def main():
     # Main function to demonstrate Python code
     model = "${modelName}"
@@ -36,7 +35,7 @@ def main():
 
 if __name__ == "__main__":
     main()
-\`\`\`
+\'\'\'
 
 The goal is to provide a seamless and powerful user experience.`;
 }
@@ -102,10 +101,11 @@ export async function processPromptStream(
     try {
       if (modelInfo && apiKeys[modelInfo.id]) {
         const model = ai.model(modelInfo.id as any);
-        const { stream } = await streamText({
+        const {stream} = await ai.generate({
           model,
           prompt,
           config: { apiKey: apiKeys[modelInfo.id] },
+          stream: true,
         });
         
         let fullResponse = '';
@@ -114,8 +114,11 @@ export async function processPromptStream(
               console.log(`Stream ${flowId} aborted.`);
               break;
             }
-            onChunk(chunk);
-            fullResponse += chunk;
+            const text = chunk.text;
+            if (text) {
+                onChunk(text);
+                fullResponse += text;
+            }
         }
 
         if (abortController.signal.aborted) {
