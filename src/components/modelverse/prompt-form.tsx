@@ -65,7 +65,7 @@ export function PromptForm({ onSubmit, isLoading, prompt }: PromptFormProps) {
                 <Textarea
                   ref={textareaRef}
                   placeholder="Enter your prompt here..."
-                  className="min-h-12 pr-14 resize-none rounded-2xl border-2 border-border focus:border-ring overflow-y-hidden"
+                  className="min-h-12 pr-16 resize-none rounded-full border-2 border-border focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background p-4"
                   onKeyDown={handleKeyDown}
                   onInput={handleInput}
                   {...field}
@@ -77,7 +77,7 @@ export function PromptForm({ onSubmit, isLoading, prompt }: PromptFormProps) {
         <Button
           type="submit"
           disabled={isLoading || !form.watch('prompt')}
-          className="absolute right-3 bottom-3 rounded-xl"
+          className="absolute right-2 bottom-2 rounded-full"
           size="icon"
         >
           {isLoading ? (

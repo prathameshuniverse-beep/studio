@@ -42,7 +42,7 @@ export function WelcomeScreen({
             value={selectedModel?.id}
             onValueChange={onModelSelect}
           >
-          <SelectTrigger className="w-full max-w-xs sm:w-72 h-14 text-lg font-semibold rounded-xl border-2">
+          <SelectTrigger className="w-full max-w-xs sm:w-72 h-16 text-lg font-medium rounded-full border-2">
             <SelectValue placeholder="Select a model" />
           </SelectTrigger>
           <SelectContent>
@@ -62,20 +62,20 @@ export function WelcomeScreen({
       </div>
 
       <div className="w-full max-w-4xl">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {isLoading
             ? Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-24 w-full" />
+                <Skeleton key={i} className="h-28 w-full" />
               ))
             : suggestions.slice(0, 4).map((prompt, i) => (
                 <Card
                   key={i}
                   onClick={() => onSuggestionClick(prompt)}
-                  className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-md bg-card border-border/50 text-left rounded-xl"
+                  className="cursor-pointer transition-all hover:bg-muted/50 hover:border-primary/50 text-left rounded-2xl"
                 >
                   <CardContent className="p-4">
-                    <p className="text-sm font-medium">{prompt}</p>
-                    <p className="text-xs text-muted-foreground mt-2">for {selectedModel?.name}</p>
+                    <p className="font-medium">{prompt}</p>
+                    <p className="text-sm text-muted-foreground mt-2">for {selectedModel?.name}</p>
                   </CardContent>
                 </Card>
               ))}
