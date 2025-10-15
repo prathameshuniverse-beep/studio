@@ -41,22 +41,22 @@ interface SettingsDialogProps {
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { toast } = useToast();
 
+  const getSavedKeys = () => {
+    if (typeof window === 'undefined') {
+      return {};
+    }
+    const savedKeys = localStorage.getItem('model-api-keys');
+    return savedKeys ? JSON.parse(savedKeys) : {};
+  };
+
   const form = useForm<ApiKeysFormValues>({
     resolver: zodResolver(apiKeysSchema),
-    defaultValues: () => {
-      if (typeof window === 'undefined') {
-        return {};
-      }
-      const savedKeys = localStorage.getItem('model-api-keys');
-      return savedKeys ? JSON.parse(savedKeys) : {};
-    },
+    defaultValues: getSavedKeys(),
   });
 
   React.useEffect(() => {
-    if (open && typeof window !== 'undefined') {
-      const savedKeys = localStorage.getItem('model-api-keys');
-      const parsedKeys = savedKeys ? JSON.parse(savedKeys) : {};
-      form.reset(parsedKeys);
+    if (open) {
+      form.reset(getSavedKeys());
     }
   }, [open, form]);
 
