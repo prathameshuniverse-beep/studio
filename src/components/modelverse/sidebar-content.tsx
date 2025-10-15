@@ -64,18 +64,18 @@ export function SidebarContent({
     <>
       <SidebarHeader>
         <div className="flex items-center justify-center h-16 w-full mx-auto">
-          <BrainCircuitIcon className="w-8 h-8 text-primary" />
+          <BrainCircuitIcon className="w-7 h-7 text-primary" />
         </div>
       </SidebarHeader>
       <SidebarContentArea>
         <SidebarMenu>
             <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Explore" size="lg" isActive={activeButton === 'explore'} onClick={() => handleMenuClick('explore')}>
+                <SidebarMenuButton tooltip="Explore" size="default" isActive={activeButton === 'explore'} onClick={() => handleMenuClick('explore')}>
                     <LayoutGrid />
                 </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-                <SidebarMenuButton tooltip="New Chat" size="lg" onClick={() => handleMenuClick('new')}>
+                <SidebarMenuButton tooltip="New Chat" size="default" onClick={() => handleMenuClick('new')}>
                     <Pencil />
                 </SidebarMenuButton>
             </SidebarMenuItem>
@@ -83,7 +83,7 @@ export function SidebarContent({
               <SidebarMenuItem>
                   <Sheet open={isHistoryPanelOpen} onOpenChange={setIsHistoryPanelOpen}>
                       <SheetTrigger asChild>
-                          <SidebarMenuButton tooltip="History" size="lg" isActive={activeButton === 'history'}>
+                          <SidebarMenuButton tooltip="History" size="default" isActive={activeButton === 'history'}>
                               <History />
                           </SidebarMenuButton>
                       </SheetTrigger>
@@ -104,7 +104,7 @@ export function SidebarContent({
             <SidebarMenuItem>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <SidebarMenuButton tooltip={{content: "Change Theme"}} size="lg">
+                        <SidebarMenuButton tooltip={{content: "Change Theme"}} size="default">
                             <Palette />
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
@@ -129,7 +129,7 @@ export function SidebarContent({
                 </DropdownMenu>
             </SidebarMenuItem>
             <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{content: "Settings"}} size="lg" onClick={() => setIsSettingsOpen(true)}>
+                <SidebarMenuButton tooltip={{content: "Settings"}} size="default" onClick={() => setIsSettingsOpen(true)}>
                     <Cog />
                 </SidebarMenuButton>
             </SidebarMenuItem>
