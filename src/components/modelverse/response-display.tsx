@@ -6,11 +6,11 @@ import { Markdown } from './markdown';
 import type { Model, IndividualResponse } from '@/lib/types';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { User, Sparkles } from 'lucide-react';
-import { ALL_MODELS_ID } from '@/lib/constants';
+import { ALL_MODELS_ID, MODELS } from '@/lib/constants';
 
 interface ResponseDisplayProps {
   prompt: string;
-  response: string | IndividualResponse[];
+  response: string | IndividualResponse[] | Omit<IndividualResponse, 'model'> & { model: { id: string; name: string } }[];
   summary: string;
   isLoading: boolean;
   model: Model | null;
@@ -50,37 +50,42 @@ export function ResponseDisplay({
     </div>
   );
 
-  const renderAllResponses = (responses: IndividualResponse[]) => (
+  const renderAllResponses = (responses: any[]) => (
     <>
       {isLoading && !responses.length ? (
         // Show skeletons for all models while loading
-        Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="flex items-start gap-4">
+        MODELS.map((m) => (
+          <div key={m.id} className="flex items-start gap-4">
              <Avatar className='border-2 border-transparent'>
                 <AvatarFallback className="bg-transparent">
-                    <Sparkles className="w-8 h-8 text-primary animate-pulse"/>
+                    <m.Icon className="w-8 h-8 text-primary animate-pulse"/>
                 </AvatarFallback>
              </Avatar>
              <div className="flex-1 space-y-2">
-                <Skeleton className="h-5 w-32 mb-2" />
+                <p className="font-semibold text-primary">{m.name} Response</p>
                 <LoadingSkeleton />
              </div>
           </div>
         ))
       ) : (
-        responses.map(({ model: responseModel, response: res }) => (
-          <div key={responseModel.id} className="flex items-start gap-4">
-            <Avatar className='border-2 border-transparent'>
-              <AvatarFallback className="bg-transparent">
-                <responseModel.Icon className="w-8 h-8 text-primary" />
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 space-y-2">
-              <p className="font-semibold text-primary">{responseModel.name} Response</p>
-              <Markdown content={res} />
+        responses.map((resItem) => {
+          const responseModel = MODELS.find(m => m.id === resItem.model.id);
+          if (!responseModel) return null;
+
+          return (
+            <div key={responseModel.id} className="flex items-start gap-4">
+              <Avatar className='border-2 border-transparent'>
+                <AvatarFallback className="bg-transparent">
+                  <responseModel.Icon className="w-8 h-8 text-primary" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 space-y-2">
+                <p className="font-semibold text-primary">{responseModel.name} Response</p>
+                <Markdown content={resItem.response} />
+              </div>
             </div>
-          </div>
-        ))
+          );
+        })
       )}
     </>
   );

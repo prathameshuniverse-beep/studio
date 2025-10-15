@@ -88,23 +88,27 @@ export async function processPrompt(prompt: string, modelName: string, apiKeys: 
   }
 }
 
-export async function processPromptAll(prompt: string, apiKeys: Record<string, string>): Promise<IndividualResponse[]> {
-    const allModelResponses = await Promise.all(
-      MODELS.map(async (model) => {
-        try {
-          const result = await processPrompt(prompt, model.name, apiKeys);
-          return { model, ...result };
-        } catch (error) {
-          console.error(`Error processing prompt for ${model.name}:`, error);
-          const dummyResponse = await getDummyResponse(prompt, model.name);
-          return {
-            model,
-            response: `Error fetching response from ${model.name}.\n\n${dummyResponse}`,
-            summary: "Error generating summary."
-          };
-        }
-      })
-    );
-  
-    return allModelResponses;
+export async function processPromptAll(prompt: string, apiKeys: Record<string, string>): Promise<Omit<IndividualResponse, 'model'> & { model: { id: string; name: string; } }[]> {
+  const allModelResponses = await Promise.all(
+    MODELS.map(async (model) => {
+      try {
+        const result = await processPrompt(prompt, model.name, apiKeys);
+        // Return a serializable object, excluding the Icon component
+        return {
+          model: { id: model.id, name: model.name },
+          ...result,
+        };
+      } catch (error) {
+        console.error(`Error processing prompt for ${model.name}:`, error);
+        const dummyResponse = await getDummyResponse(prompt, model.name);
+        return {
+          model: { id: model.id, name: model.name },
+          response: `Error fetching response from ${model.name}.\n\n${dummyResponse}`,
+          summary: "Error generating summary."
+        };
+      }
+    })
+  );
+
+  return allModelResponses;
 }

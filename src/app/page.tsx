@@ -206,9 +206,14 @@ export default function Home() {
     try {
         if (state.selectedModel.id === ALL_MODELS_ID) {
             const results = await processPromptAll(data.prompt, apiKeys);
+            // Re-hydrate the full model object on the client
+            const hydratedResults: IndividualResponse[] = results.map(res => ({
+              ...res,
+              model: MODELS.find(m => m.id === res.model.id)!,
+            }));
             dispatch({
                 type: 'GENERATE_ALL_RESPONSES_SUCCESS',
-                payload: { responses: results, prompt: data.prompt }
+                payload: { responses: hydratedResults, prompt: data.prompt }
             })
         } else {
             const result = await processPrompt(data.prompt, state.selectedModel.name, apiKeys);
