@@ -63,7 +63,7 @@ export function SidebarContent({
   return (
     <>
       <SidebarHeader>
-        <div className="flex items-center justify-center h-16 w-full mx-auto">
+        <div className="flex items-center justify-center h-16 w-full mx-auto group-data-[collapsible=icon]:w-10">
           <BrainCircuitIcon className="w-7 h-7 text-primary" />
         </div>
       </SidebarHeader>
@@ -139,5 +139,3 @@ export function SidebarContent({
     </>
   );
 }
-
-    
