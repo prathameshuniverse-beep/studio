@@ -63,8 +63,8 @@ export function SidebarContent({
   return (
     <>
       <SidebarHeader>
-        <div className="flex items-center justify-center h-16 w-16 mx-auto">
-          <BrainCircuitIcon className="w-9 h-9 text-primary" />
+        <div className="flex items-center justify-center h-16 w-full mx-auto">
+          <BrainCircuitIcon className="w-8 h-8 text-primary" />
         </div>
       </SidebarHeader>
       <SidebarContentArea>
