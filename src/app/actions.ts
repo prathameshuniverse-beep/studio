@@ -3,6 +3,7 @@ import { generateStartingPrompts } from '@/ai/flows/generate-starting-prompts';
 import { summarizeModelResponse } from '@/ai/flows/summarize-model-response';
 import { MODELS } from '@/lib/constants';
 import type { IndividualResponse } from '@/lib/types';
+import { ai } from '@/ai/genkit';
 
 async function getDummyResponse(prompt: string, modelName: string) {
   await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1000)); 
@@ -55,8 +56,22 @@ export async function getSuggestions(modelName: string) {
   }
 }
 
-export async function processPrompt(prompt: string, modelName: string) {
-  const response = await getDummyResponse(prompt, modelName);
+export async function processPrompt(prompt: string, modelName: string, apiKeys: Record<string, string>) {
+  const modelInfo = MODELS.find(m => m.name === modelName);
+  let response = '';
+
+  if (modelInfo && apiKeys[modelInfo.id]) {
+      try {
+        const model = ai.model(modelInfo.id as any);
+        const result = await ai.generate({ model, prompt, config: { apiKey: apiKeys[modelInfo.id] }});
+        response = result.text;
+      } catch (error) {
+        console.error(`Error with ${modelName}:`, error);
+        response = `Error fetching response from ${modelName}. Falling back to dummy response.\n\n` + await getDummyResponse(prompt, modelName);
+      }
+  } else {
+    response = await getDummyResponse(prompt, modelName);
+  }
   
   try {
     const summaryResult = await summarizeModelResponse({ modelResponse: response });
@@ -73,11 +88,11 @@ export async function processPrompt(prompt: string, modelName: string) {
   }
 }
 
-export async function processPromptAll(prompt: string): Promise<IndividualResponse[]> {
+export async function processPromptAll(prompt: string, apiKeys: Record<string, string>): Promise<IndividualResponse[]> {
     const allModelResponses = await Promise.all(
       MODELS.map(async (model) => {
         try {
-          const result = await processPrompt(prompt, model.name);
+          const result = await processPrompt(prompt, model.name, apiKeys);
           return { model, ...result };
         } catch (error) {
           return {

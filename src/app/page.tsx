@@ -184,6 +184,12 @@ export default function Home() {
     }
   };
 
+  const getApiKeys = () => {
+    if (typeof window === 'undefined') return {};
+    const savedKeys = localStorage.getItem('model-api-keys');
+    return savedKeys ? JSON.parse(savedKeys) : {};
+  };
+
   const handlePromptSubmit = async (data: { prompt: string }) => {
     if (!state.selectedModel) {
       toast({
@@ -195,15 +201,17 @@ export default function Home() {
     }
     dispatch({ type: 'GENERATE_RESPONSE_START', payload: data.prompt });
     
+    const apiKeys = getApiKeys();
+
     try {
         if (state.selectedModel.id === ALL_MODELS_ID) {
-            const results = await processPromptAll(data.prompt);
+            const results = await processPromptAll(data.prompt, apiKeys);
             dispatch({
                 type: 'GENERATE_ALL_RESPONSES_SUCCESS',
                 payload: { responses: results, prompt: data.prompt }
             })
         } else {
-            const result = await processPrompt(data.prompt, state.selectedModel.name);
+            const result = await processPrompt(data.prompt, state.selectedModel.name, apiKeys);
             dispatch({ 
                 type: 'GENERATE_SINGLE_RESPONSE_SUCCESS', 
                 payload: { ...result, prompt: data.prompt, model: state.selectedModel } 
@@ -240,7 +248,6 @@ export default function Home() {
         <Sidebar>
           <SidebarContent 
             onNewChat={handleNewChat}
-            onSettingsClick={() => {}} // Placeholder
           />
         </Sidebar>
         <HistoryPanel

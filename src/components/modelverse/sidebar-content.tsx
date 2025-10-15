@@ -9,14 +9,12 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
 import { BrainCircuitIcon } from '@/components/icons';
 import { SettingsDialog } from './settings-dialog';
 import { Cog, History, LayoutGrid, Pencil } from 'lucide-react';
 
 type SidebarContentProps = {
   onNewChat: () => void;
-  onSettingsClick: () => void; // This is a placeholder
 };
 
 export function SidebarContent({
