@@ -1,3 +1,4 @@
+
 "use client"
 
 import { Input } from "@/components/ui/input"
@@ -6,7 +7,6 @@ import type { Interaction, IndividualResponse } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { Search } from "lucide-react"
 import * as React from "react"
-import { Skeleton } from "@/components/ui/skeleton"
 
 interface HistoryPanelProps {
   interactions: Interaction[]
@@ -38,14 +38,14 @@ export function HistoryPanel({
   )
 
   return (
-    <div className="flex flex-col w-full h-full bg-card">
-      <div className="p-4 border-b border-border">
-        <h2 className="text-lg font-semibold">Interaction History</h2>
+    <div className="flex flex-col w-full h-full bg-sidebar text-sidebar-foreground">
+      <div className="p-4 border-b border-sidebar-border">
+        <h2 className="text-xl font-semibold">History</h2>
         <div className="relative mt-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search history..."
-            className="pl-9"
+            className="pl-9 bg-card border-border"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -69,8 +69,8 @@ export function HistoryPanel({
               className={cn(
                 "w-full text-left p-3 rounded-lg transition-colors",
                 activeInteractionId === interaction.id
-                  ? "bg-accent text-accent-foreground"
-                  : "hover:bg-muted/50"
+                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                  : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
               onClick={() => onSelectInteraction(interaction.id)}
             >
@@ -94,3 +94,5 @@ export function HistoryPanel({
     </div>
   )
 }
+
+    

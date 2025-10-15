@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -22,6 +23,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu"
+import { useIsMobile } from '@/hooks/use-mobile';
 
 
 type SidebarContentProps = {
@@ -41,6 +43,7 @@ export function SidebarContent({
   const [activeButton, setActiveButton] = React.useState('explore');
   const [isHistoryPanelOpen, setIsHistoryPanelOpen] = React.useState(false);
   const { setTheme } = useTheme();
+  const isMobile = useIsMobile();
 
 
   const handleMenuClick = (buttonName: string) => {
@@ -60,7 +63,7 @@ export function SidebarContent({
   return (
     <>
       <SidebarHeader className="p-0">
-        <div className="flex items-center justify-center h-14">
+        <div className="flex items-center justify-center h-16 border-b border-sidebar-border">
           <BrainCircuitIcon className="w-8 h-8 text-primary" />
         </div>
       </SidebarHeader>
@@ -76,22 +79,24 @@ export function SidebarContent({
                     <Pencil />
                 </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem>
-                <Sheet open={isHistoryPanelOpen} onOpenChange={setIsHistoryPanelOpen}>
-                    <SheetTrigger asChild>
-                        <SidebarMenuButton tooltip="History" size="lg" isActive={activeButton === 'history'}>
-                            <History />
-                        </SidebarMenuButton>
-                    </SheetTrigger>
-                    <SheetContent side="left" className="p-0 w-80">
-                         <HistoryPanel
-                            interactions={interactions}
-                            onSelectInteraction={handleHistorySelect}
-                            activeInteractionId={activeInteractionId}
-                        />
-                    </SheetContent>
-                </Sheet>
-            </SidebarMenuItem>
+            {isMobile && (
+              <SidebarMenuItem>
+                  <Sheet open={isHistoryPanelOpen} onOpenChange={setIsHistoryPanelOpen}>
+                      <SheetTrigger asChild>
+                          <SidebarMenuButton tooltip="History" size="lg" isActive={activeButton === 'history'}>
+                              <History />
+                          </SidebarMenuButton>
+                      </SheetTrigger>
+                      <SheetContent side="left" className="p-0 w-80 bg-sidebar border-r-0">
+                           <HistoryPanel
+                              interactions={interactions}
+                              onSelectInteraction={handleHistorySelect}
+                              activeInteractionId={activeInteractionId}
+                          />
+                      </SheetContent>
+                  </Sheet>
+              </SidebarMenuItem>
+            )}
         </SidebarMenu>
       </SidebarContentArea>
       <SidebarFooter className="p-0">
@@ -99,7 +104,7 @@ export function SidebarContent({
             <SidebarMenuItem>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <SidebarMenuButton tooltip="Change Theme" size="lg">
+                        <SidebarMenuButton tooltip={{content: "Change Theme"}} size="lg">
                             <Palette />
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
@@ -124,7 +129,7 @@ export function SidebarContent({
                 </DropdownMenu>
             </SidebarMenuItem>
             <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Settings" size="lg" onClick={() => setIsSettingsOpen(true)}>
+                <SidebarMenuButton tooltip={{content: "Settings"}} size="lg" onClick={() => setIsSettingsOpen(true)}>
                     <Cog />
                 </SidebarMenuButton>
             </SidebarMenuItem>
@@ -134,3 +139,5 @@ export function SidebarContent({
     </>
   );
 }
+
+    

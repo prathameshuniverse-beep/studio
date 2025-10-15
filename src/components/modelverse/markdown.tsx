@@ -1,4 +1,10 @@
-import React from 'react';
+
+"use client";
+
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Check, Clipboard } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface MarkdownProps {
   content: string;
@@ -6,6 +12,16 @@ interface MarkdownProps {
 
 export function Markdown({ content }: MarkdownProps) {
   const parts = content.split(/(```[\s\S]*?```)/g);
+  const { toast } = useToast();
+
+  const handleCopy = (code: string) => {
+    navigator.clipboard.writeText(code).then(() => {
+      toast({ title: "Copied to clipboard!" });
+    }).catch(err => {
+      console.error('Failed to copy text: ', err);
+      toast({ variant: "destructive", title: "Failed to copy" });
+    });
+  };
 
   return (
     <div className="prose prose-sm dark:prose-invert max-w-none space-y-4 text-foreground">
@@ -13,20 +29,32 @@ export function Markdown({ content }: MarkdownProps) {
         if (part.startsWith('```')) {
           const lang = part.match(/```(\w*)\n/)?.[1] || '';
           const code = part.replace(/```\w*\n/, '').replace(/```$/, '');
+          const [isCopied, setIsCopied] = useState(false);
+
+          const onCopyClick = () => {
+            handleCopy(code);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+          }
+
           return (
-            <div key={index} className="relative rounded-lg border bg-secondary/30">
-              <div className="absolute top-2 right-2 text-xs text-muted-foreground">{lang}</div>
-              <pre className="p-4 overflow-x-auto rounded-lg">
+            <div key={index} className="relative rounded-lg border bg-secondary/30 group">
+              <div className="flex items-center justify-between p-2">
+                <span className="text-xs text-muted-foreground pl-2">{lang}</span>
+                <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={onCopyClick}>
+                  {isCopied ? <Check className="w-4 h-4 text-green-500" /> : <Clipboard className="w-4 h-4" />}
+                  <span className="sr-only">Copy code</span>
+                </Button>
+              </div>
+              <pre className="p-4 pt-0 overflow-x-auto rounded-b-lg">
                 <code className="font-code text-sm">{code}</code>
               </pre>
             </div>
           );
         }
         
-        // Split text by newlines and wrap each line in a paragraph
         return part.split('\n').map((line, lineIndex) => {
           if (line.trim() === '') return null;
-          // Render bold and italic text
           const formatText = (text: string) => {
              return text
                 .split(/(\*\*.+?\*\*|\*.+?\*)/g)
@@ -49,3 +77,5 @@ export function Markdown({ content }: MarkdownProps) {
     </div>
   );
 }
+
+    

@@ -1,9 +1,11 @@
+
 "use server";
 import { generateStartingPrompts } from '@/ai/flows/generate-starting-prompts';
 import { summarizeModelResponse } from '@/ai/flows/summarize-model-response';
 import { MODELS } from '@/lib/constants';
 import type { IndividualResponse } from '@/lib/types';
 import { ai } from '@/ai/genkit';
+import { streamText } from 'genkit/experimental/ai';
 
 async function getDummyResponse(prompt: string, modelName: string) {
   await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1000)); 
@@ -45,7 +47,6 @@ export async function getSuggestions(modelName: string) {
     return result.prompts;
   } catch (error) {
     console.error("Error fetching suggestions:", error);
-    // Return fallback prompts on error
     return [
         `What is the history of ${modelName}?`,
         `Write a short story in the style of a noir detective, where the main character is ${modelName}.`,
@@ -88,12 +89,88 @@ export async function processPrompt(prompt: string, modelName: string, apiKeys: 
   }
 }
 
+const activeStreams: Map<string, AbortController> = new Map();
+
+export async function processPromptStream(
+    { prompt, modelName, apiKeys, flowId }: { prompt: string, modelName: string, apiKeys: Record<string, string>, flowId: string},
+    onChunk: (chunk: string) => void
+  ) {
+    const modelInfo = MODELS.find(m => m.name === modelName);
+    const abortController = new AbortController();
+    activeStreams.set(flowId, abortController);
+  
+    try {
+      if (modelInfo && apiKeys[modelInfo.id]) {
+        const model = ai.model(modelInfo.id as any);
+        const stream = await streamText({
+          model,
+          prompt,
+          config: { apiKey: apiKeys[modelInfo.id] },
+        });
+        
+        let fullResponse = '';
+        for await (const chunk of stream) {
+            if (abortController.signal.aborted) {
+              console.log(`Stream ${flowId} aborted.`);
+              break;
+            }
+            onChunk(chunk);
+            fullResponse += chunk;
+        }
+
+        if (abortController.signal.aborted) {
+            return null; // Don't proceed to summary if aborted
+        }
+  
+        const summaryResult = await summarizeModelResponse({ modelResponse: fullResponse });
+        return {
+          response: fullResponse,
+          summary: summaryResult.summary,
+        };
+  
+      } else {
+        const response = await getDummyResponse(prompt, modelName);
+        // Simulate streaming for dummy response
+        for (const word of response.split(' ')) {
+            if (abortController.signal.aborted) break;
+            onChunk(word + ' ');
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        if (abortController.signal.aborted) return null;
+
+        const summaryResult = await summarizeModelResponse({ modelResponse: response });
+        return {
+          response,
+          summary: summaryResult.summary,
+        };
+      }
+    } catch (error) {
+      console.error(`Error with ${modelName}:`, error);
+      const response = `Error fetching response from ${modelName}. Falling back to dummy response.\n\n` + await getDummyResponse(prompt, modelName);
+      onChunk(response);
+      return {
+          response,
+          summary: "Error generating summary."
+      };
+    } finally {
+        activeStreams.delete(flowId);
+    }
+}
+
+export async function stopGeneration(flowId: string) {
+    if (activeStreams.has(flowId)) {
+      activeStreams.get(flowId)?.abort();
+      activeStreams.delete(flowId);
+      console.log(`Requested to stop generation for flow: ${flowId}`);
+    }
+}
+  
+
 export async function processPromptAll(prompt: string, apiKeys: Record<string, string>): Promise<Omit<IndividualResponse, 'model'> & { model: { id: string; name: string; } }[]> {
   const allModelResponses = await Promise.all(
     MODELS.map(async (model) => {
       try {
         const result = await processPrompt(prompt, model.name, apiKeys);
-        // Return a serializable object, excluding the Icon component
         return {
           model: { id: model.id, name: model.name },
           ...result,
@@ -112,3 +189,5 @@ export async function processPromptAll(prompt: string, apiKeys: Record<string, s
 
   return allModelResponses;
 }
+
+    
