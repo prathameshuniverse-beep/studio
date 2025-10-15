@@ -5,7 +5,7 @@ import { summarizeModelResponse } from '@/ai/flows/summarize-model-response';
 import { MODELS } from '@/lib/constants';
 import type { IndividualResponse } from '@/lib/types';
 import { ai } from '@/ai/genkit';
-import { streamText } from 'genkit/experimental/ai';
+import { streamText } from 'genkit/ai';
 
 async function getDummyResponse(prompt: string, modelName: string) {
   await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1000)); 
@@ -102,7 +102,7 @@ export async function processPromptStream(
     try {
       if (modelInfo && apiKeys[modelInfo.id]) {
         const model = ai.model(modelInfo.id as any);
-        const stream = await streamText({
+        const { stream } = await streamText({
           model,
           prompt,
           config: { apiKey: apiKeys[modelInfo.id] },
