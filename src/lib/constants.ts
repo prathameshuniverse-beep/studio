@@ -8,8 +8,11 @@ import {
   MetaIcon,
   GemmaIcon,
   DeepseekIcon,
+  BrainCircuitIcon,
 } from '@/components/icons';
 import type { Model } from '@/lib/types';
+
+export const ALL_MODELS_ID = 'all-models';
 
 export const MODELS: Model[] = [
   { id: 'gemini', name: 'Gemini', Icon: GeminiIcon },
@@ -22,6 +25,12 @@ export const MODELS: Model[] = [
   { id: 'gemma', name: 'Gemma', Icon: GemmaIcon },
   { id: 'deepseek', name: 'DeepSeek', Icon: DeepseekIcon },
 ];
+
+export const ALL_MODELS_OPTION: Model = {
+  id: ALL_MODELS_ID,
+  name: 'All GenAI LLM Models',
+  Icon: BrainCircuitIcon,
+};
 
 export const DEFAULT_TEMPERATURE = 0.7;
 export const DEFAULT_MAX_TOKENS = 1024;

@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Sparkles, ChevronDown } from 'lucide-react';
 import type { Model } from '@/lib/types';
-import { MODELS } from '@/lib/constants';
+import { MODELS, ALL_MODELS_OPTION } from '@/lib/constants';
 import {
   Select,
   SelectContent,
@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 
 interface WelcomeScreenProps {
   suggestions: string[];
@@ -21,6 +22,9 @@ interface WelcomeScreenProps {
   onModelSelect: (modelId: string) => void;
   selectedModel: Model | null;
 }
+
+const ALL_AVAILABLE_MODELS = [ALL_MODELS_OPTION, ...MODELS];
+
 
 export function WelcomeScreen({
   suggestions,
@@ -37,17 +41,20 @@ export function WelcomeScreen({
             value={selectedModel?.id}
             onValueChange={onModelSelect}
           >
-          <SelectTrigger className="w-64 h-14 text-lg font-semibold rounded-xl border-2">
+          <SelectTrigger className="w-72 h-14 text-lg font-semibold rounded-xl border-2">
             <SelectValue placeholder="Select a model" />
           </SelectTrigger>
           <SelectContent>
-            {MODELS.map((model) => (
-              <SelectItem key={model.id} value={model.id}>
-                <div className="flex items-center gap-2">
-                  <model.Icon className="w-4 h-4" />
-                  <span>{model.name}</span>
-                </div>
-              </SelectItem>
+            {ALL_AVAILABLE_MODELS.map((model, index) => (
+              <React.Fragment key={model.id}>
+                {model.id === 'gemini' && <Separator className="my-1" />}
+                <SelectItem value={model.id}>
+                  <div className="flex items-center gap-3">
+                    <model.Icon className="w-5 h-5" />
+                    <span>{model.name}</span>
+                  </div>
+                </SelectItem>
+              </React.Fragment>
             ))}
           </SelectContent>
         </Select>

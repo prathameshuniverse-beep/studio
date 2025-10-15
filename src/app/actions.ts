@@ -1,9 +1,11 @@
 "use server";
 import { generateStartingPrompts } from '@/ai/flows/generate-starting-prompts';
 import { summarizeModelResponse } from '@/ai/flows/summarize-model-response';
+import { MODELS } from '@/lib/constants';
+import type { IndividualResponse } from '@/lib/types';
 
 async function getDummyResponse(prompt: string, modelName: string) {
-  await new Promise(resolve => setTimeout(resolve, 1500)); 
+  await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1000)); 
   return `This is a simulated response from **${modelName}** for the prompt: *"${prompt}"*.
 
 ModelVerse is designed to be a clean and intuitive interface. Here are some of its features:
@@ -69,4 +71,23 @@ export async function processPrompt(prompt: string, modelName: string) {
         summary: "Could not generate summary for this response.",
     }
   }
+}
+
+export async function processPromptAll(prompt: string): Promise<IndividualResponse[]> {
+    const allModelResponses = await Promise.all(
+      MODELS.map(async (model) => {
+        try {
+          const result = await processPrompt(prompt, model.name);
+          return { model, ...result };
+        } catch (error) {
+          return {
+            model,
+            response: `Error fetching response from ${model.name}.`,
+            summary: "Error generating summary."
+          };
+        }
+      })
+    );
+  
+    return allModelResponses;
 }

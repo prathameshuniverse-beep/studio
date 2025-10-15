@@ -7,9 +7,9 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import { useToast } from '@/hooks/use-toast';
-import { getSuggestions, processPrompt } from '@/app/actions';
-import type { Model, Interaction } from '@/lib/types';
-import { MODELS } from '@/lib/constants';
+import { getSuggestions, processPrompt, processPromptAll } from '@/app/actions';
+import type { Model, Interaction, IndividualResponse } from '@/lib/types';
+import { MODELS, ALL_MODELS_ID, ALL_MODELS_OPTION } from '@/lib/constants';
 import { SidebarContent } from '@/components/modelverse/sidebar-content';
 import { WelcomeScreen } from '@/components/modelverse/welcome-screen';
 import { ResponseDisplay } from '@/components/modelverse/response-display';
@@ -24,7 +24,7 @@ type AppState = {
   isGeneratingResponse: boolean;
   suggestions: string[];
   prompt: string;
-  response: string;
+  response: string | IndividualResponse[];
   summary: string;
   history: Interaction[];
   activeInteractionId: string | null;
@@ -40,15 +40,19 @@ type AppAction =
   | { type: 'FETCH_SUGGESTIONS_ERROR' }
   | { type: 'GENERATE_RESPONSE_START'; payload: string }
   | {
-      type: 'GENERATE_RESPONSE_SUCCESS';
+      type: 'GENERATE_SINGLE_RESPONSE_SUCCESS';
       payload: { response: string; summary: string; prompt: string; model: Model };
+    }
+  | {
+      type: 'GENERATE_ALL_RESPONSES_SUCCESS';
+      payload: { responses: IndividualResponse[]; prompt: string; };
     }
   | { type: 'GENERATE_RESPONSE_ERROR' }
   | { type: 'NEW_CHAT' }
   | { type: 'LOAD_INTERACTION'; payload: string };
 
 const initialState: AppState = {
-  selectedModel: MODELS[0],
+  selectedModel: ALL_MODELS_OPTION,
   temperature: 0.7,
   maxTokens: 1024,
   isLoadingSuggestions: true,
@@ -82,10 +86,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ...state, 
         isGeneratingResponse: true, 
         prompt: action.payload,
-        response: '', // Clear previous response
+        response: '',
         summary: ''
       };
-    case 'GENERATE_RESPONSE_SUCCESS': {
+    case 'GENERATE_SINGLE_RESPONSE_SUCCESS': {
       const newInteraction: Interaction = {
         id: new Date().toISOString(),
         model: action.payload.model,
@@ -103,6 +107,24 @@ function appReducer(state: AppState, action: AppAction): AppState {
         activeInteractionId: newInteraction.id,
       };
     }
+    case 'GENERATE_ALL_RESPONSES_SUCCESS': {
+        const newInteraction: Interaction = {
+          id: new Date().toISOString(),
+          model: ALL_MODELS_OPTION,
+          prompt: action.payload.prompt,
+          response: action.payload.responses,
+          summary: `Compared ${MODELS.length} models.`,
+        };
+        return {
+          ...state,
+          isGeneratingResponse: false,
+          response: action.payload.responses,
+          summary: newInteraction.summary,
+          prompt: action.payload.prompt,
+          history: [newInteraction, ...state.history],
+          activeInteractionId: newInteraction.id,
+        };
+      }
     case 'GENERATE_RESPONSE_ERROR':
       return { ...state, isGeneratingResponse: false };
     case 'NEW_CHAT':
@@ -112,7 +134,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
           response: '',
           summary: '',
           activeInteractionId: null,
-          selectedModel: MODELS[0],
+          selectedModel: ALL_MODELS_OPTION,
         };
     case 'LOAD_INTERACTION': {
       const interaction = state.history.find(h => h.id === action.payload);
@@ -156,7 +178,7 @@ export default function Home() {
   }, [state.selectedModel, toast]);
 
   const handleModelSelect = (modelId: string) => {
-    const model = MODELS.find((m) => m.id === modelId);
+    const model = [...MODELS, ALL_MODELS_OPTION].find((m) => m.id === modelId);
     if (model) {
       dispatch({ type: 'SET_MODEL', payload: model });
     }
@@ -172,25 +194,33 @@ export default function Home() {
       return;
     }
     dispatch({ type: 'GENERATE_RESPONSE_START', payload: data.prompt });
+    
     try {
-      const result = await processPrompt(data.prompt, state.selectedModel.name);
-      dispatch({ 
-        type: 'GENERATE_RESPONSE_SUCCESS', 
-        payload: { ...result, prompt: data.prompt, model: state.selectedModel } 
-      });
+        if (state.selectedModel.id === ALL_MODELS_ID) {
+            const results = await processPromptAll(data.prompt);
+            dispatch({
+                type: 'GENERATE_ALL_RESPONSES_SUCCESS',
+                payload: { responses: results, prompt: data.prompt }
+            })
+        } else {
+            const result = await processPrompt(data.prompt, state.selectedModel.name);
+            dispatch({ 
+                type: 'GENERATE_SINGLE_RESPONSE_SUCCESS', 
+                payload: { ...result, prompt: data.prompt, model: state.selectedModel } 
+            });
+        }
     } catch (error) {
       dispatch({ type: 'GENERATE_RESPONSE_ERROR' });
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to get a response from the model.',
+        description: 'Failed to get a response from the model(s).',
       });
     }
   };
   
   const onSuggestionClick = (prompt: string) => {
     dispatch({ type: 'SET_PROMPT', payload: prompt });
-    // Automatically submit the suggestion
     handlePromptSubmit({ prompt });
   };
 
@@ -221,7 +251,7 @@ export default function Home() {
         <SidebarInset>
           <main className="flex-1 flex flex-col overflow-auto p-4 md:p-6">
             <div className="mx-auto max-w-4xl w-full h-full">
-              {state.response || state.isGeneratingResponse ? (
+              {(state.response || state.isGeneratingResponse) ? (
                 <ResponseDisplay
                   prompt={state.prompt}
                   response={state.response}

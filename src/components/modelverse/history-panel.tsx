@@ -2,15 +2,26 @@
 
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import type { Interaction } from "@/lib/types"
+import type { Interaction, IndividualResponse } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { Search } from "lucide-react"
 import * as React from "react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface HistoryPanelProps {
   interactions: Interaction[]
   onSelectInteraction: (id: string) => void
   activeInteractionId: string | null
+}
+
+function getResponseText(response: string | IndividualResponse[]): string {
+    if (typeof response === 'string') {
+      return response;
+    }
+    if (Array.isArray(response)) {
+      return response.map(r => r.response).join(' ');
+    }
+    return '';
 }
 
 export function HistoryPanel({
@@ -23,7 +34,7 @@ export function HistoryPanel({
   const filteredInteractions = interactions.filter(
     (interaction) =>
       interaction.prompt.toLowerCase().includes(search.toLowerCase()) ||
-      interaction.response.toLowerCase().includes(search.toLowerCase())
+      getResponseText(interaction.response).toLowerCase().includes(search.toLowerCase())
   )
 
   return (
@@ -42,6 +53,16 @@ export function HistoryPanel({
       </div>
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-2">
+          {interactions.length === 0 && search === "" && (
+             <div className="text-center text-sm text-muted-foreground py-8">
+                No history yet. Start a new chat!
+             </div>
+          )}
+          {filteredInteractions.length === 0 && search !== "" && (
+             <div className="text-center text-sm text-muted-foreground py-8">
+                No results found.
+             </div>
+          )}
           {filteredInteractions.map((interaction) => (
             <button
               key={interaction.id}
