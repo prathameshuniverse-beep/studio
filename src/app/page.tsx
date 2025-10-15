@@ -189,11 +189,6 @@ export default function Home() {
         })
         .catch(() => {
           dispatch({ type: 'FETCH_SUGGESTIONS_ERROR' });
-          toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Could not fetch starting prompts.',
-          });
         });
     }
   }, [state.selectedModel, toast]);
@@ -213,11 +208,6 @@ export default function Home() {
 
   const handlePromptSubmit = async (data: { prompt: string }) => {
     if (!state.selectedModel) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Please select a model first.',
-      });
       return;
     }
     
@@ -294,7 +284,7 @@ export default function Home() {
   return (
     <SidebarProvider defaultOpen={!isMobile}>
        <div className="flex min-h-screen bg-background">
-        <Sidebar collapsible={isMobile ? 'none' : 'icon'}>
+        <Sidebar collapsible={isMobile ? 'offcanvas' : 'icon'}>
           <SidebarContent 
             onNewChat={handleNewChat}
             interactions={state.history}
@@ -302,7 +292,7 @@ export default function Home() {
             activeInteractionId={state.activeInteractionId}
           />
         </Sidebar>
-        <div className={cn("hidden md:flex flex-col w-80 border-r border-border bg-sidebar", isMobile && "hidden")}>
+        <div className={cn("hidden md:flex flex-col w-64 border-r border-border bg-sidebar", isMobile && "hidden")}>
           <HistoryPanel
               interactions={state.history}
               onSelectInteraction={handleHistorySelect}
@@ -363,5 +353,3 @@ export default function Home() {
     </SidebarProvider>
   );
 }
-
-    
