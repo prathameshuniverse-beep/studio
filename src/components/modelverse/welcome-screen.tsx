@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from 'react';
+import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -35,14 +35,14 @@ export function WelcomeScreen({
   selectedModel,
 }: WelcomeScreenProps) {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center">
+    <div className="flex flex-col items-center justify-center h-full text-center p-2">
       
       <div className="mb-8">
         <Select
             value={selectedModel?.id}
             onValueChange={onModelSelect}
           >
-          <SelectTrigger className="w-72 h-14 text-lg font-semibold rounded-xl border-2">
+          <SelectTrigger className="w-full max-w-xs sm:w-72 h-14 text-lg font-semibold rounded-xl border-2">
             <SelectValue placeholder="Select a model" />
           </SelectTrigger>
           <SelectContent>
@@ -61,11 +61,11 @@ export function WelcomeScreen({
         </Select>
       </div>
 
-      <div className="w-full max-w-3xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="w-full max-w-4xl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {isLoading
             ? Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-20 w-full" />
+                <Skeleton key={i} className="h-24 w-full" />
               ))
             : suggestions.slice(0, 4).map((prompt, i) => (
                 <Card

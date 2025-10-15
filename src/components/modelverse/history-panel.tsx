@@ -38,7 +38,7 @@ export function HistoryPanel({
   )
 
   return (
-    <div className="hidden md:flex flex-col w-80 border-r border-border bg-card">
+    <div className="flex flex-col w-full h-full bg-card">
       <div className="p-4 border-b border-border">
         <h2 className="text-lg font-semibold">Interaction History</h2>
         <div className="relative mt-4">

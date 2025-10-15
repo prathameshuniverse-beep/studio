@@ -15,6 +15,9 @@ import { WelcomeScreen } from '@/components/modelverse/welcome-screen';
 import { ResponseDisplay } from '@/components/modelverse/response-display';
 import { PromptForm } from '@/components/modelverse/prompt-form';
 import { HistoryPanel } from '@/components/modelverse/history-panel';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
+
 
 type AppState = {
   selectedModel: Model | null;
@@ -158,6 +161,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
 export default function Home() {
   const [state, dispatch] = React.useReducer(appReducer, initialState);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   React.useEffect(() => {
     if (state.selectedModel) {
@@ -246,18 +250,23 @@ export default function Home() {
   return (
     <SidebarProvider defaultOpen={false}>
        <div className="flex min-h-screen bg-background">
-        <Sidebar>
+        <Sidebar collapsible={isMobile ? 'none' : 'icon'}>
           <SidebarContent 
             onNewChat={handleNewChat}
-          />
-        </Sidebar>
-        <HistoryPanel
             interactions={state.history}
             onSelectInteraction={handleHistorySelect}
             activeInteractionId={state.activeInteractionId}
-        />
+          />
+        </Sidebar>
+        <div className={cn("hidden md:flex flex-col w-80 border-r border-border bg-card", isMobile && "hidden")}>
+          <HistoryPanel
+              interactions={state.history}
+              onSelectInteraction={handleHistorySelect}
+              activeInteractionId={state.activeInteractionId}
+          />
+        </div>
         <SidebarInset>
-          <main className="flex-1 flex flex-col overflow-auto p-4 md:p-6">
+          <main className="flex-1 flex flex-col overflow-auto p-2 sm:p-4 md:p-6">
             <div className="mx-auto max-w-4xl w-full h-full">
               {(state.response || state.isGeneratingResponse) ? (
                 <ResponseDisplay
@@ -279,7 +288,7 @@ export default function Home() {
             </div>
             
             <div className="sticky bottom-0 w-full bg-background/95 backdrop-blur-sm mt-auto pt-4">
-              <div className="mx-auto max-w-4xl">
+              <div className="mx-auto max-w-4xl 2xl:max-w-6xl">
                 <PromptForm
                   onSubmit={handlePromptSubmit}
                   isLoading={state.isGeneratingResponse}

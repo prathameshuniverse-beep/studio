@@ -12,25 +12,42 @@ import {
 import { BrainCircuitIcon } from '@/components/icons';
 import { SettingsDialog } from './settings-dialog';
 import { Cog, History, LayoutGrid, Pencil } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { HistoryPanel } from './history-panel';
+import type { Interaction } from '@/lib/types';
+
 
 type SidebarContentProps = {
   onNewChat: () => void;
+  interactions: Interaction[];
+  onSelectInteraction: (id: string) => void;
+  activeInteractionId: string | null;
 };
 
 export function SidebarContent({
   onNewChat,
+  interactions,
+  onSelectInteraction,
+  activeInteractionId,
 }: SidebarContentProps) {
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
-  const [activeButton, setActiveButton] = React.useState('history');
+  const [activeButton, setActiveButton] = React.useState('explore');
+  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = React.useState(false);
+
 
   const handleMenuClick = (buttonName: string) => {
     if (buttonName === 'new') {
         onNewChat();
-        setActiveButton('history'); // Or whatever the default should be
-    } else {
+        setActiveButton('explore'); 
+    } else if (buttonName !== 'history') {
         setActiveButton(buttonName);
     }
   };
+
+  const handleHistorySelect = (id: string) => {
+    onSelectInteraction(id);
+    setIsHistoryPanelOpen(false);
+  }
 
   return (
     <>
@@ -52,9 +69,20 @@ export function SidebarContent({
                 </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-                <SidebarMenuButton tooltip="History" size="lg" isActive={activeButton === 'history'} onClick={() => handleMenuClick('history')}>
-                    <History />
-                </SidebarMenuButton>
+                <Sheet open={isHistoryPanelOpen} onOpenChange={setIsHistoryPanelOpen}>
+                    <SheetTrigger asChild>
+                        <SidebarMenuButton tooltip="History" size="lg" isActive={activeButton === 'history'}>
+                            <History />
+                        </SidebarMenuButton>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="p-0 w-80">
+                         <HistoryPanel
+                            interactions={interactions}
+                            onSelectInteraction={handleHistorySelect}
+                            activeInteractionId={activeInteractionId}
+                        />
+                    </SheetContent>
+                </Sheet>
             </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContentArea>
