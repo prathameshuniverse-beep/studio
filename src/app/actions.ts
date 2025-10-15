@@ -189,5 +189,3 @@ export async function processPromptAll(prompt: string, apiKeys: Record<string, s
 
   return allModelResponses;
 }
-
-    
